@@ -65,3 +65,20 @@ function createTileElement(row, col, value) {
 }
 
 window.addEventListener('load', initGame);
+
+let score = 0;
+let bestScore = 0;
+
+const scoreDisplay = document.getElementById('score');
+const bestScoreDisplay = document.getElementById('best-score');
+
+function updateDisplay() {
+    scoreDisplay.textContent = score;
+    bestScoreDisplay.textContent = bestScore;
+}
+
+function initGame() {
+    createGrid();
+    addInitialTiles();
+    updateDisplay();
+}

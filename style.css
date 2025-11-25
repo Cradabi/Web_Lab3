@@ -62,3 +62,29 @@ h1 {
     background-color: #eee4da;
     color: #776e65;
 }
+
+.scores-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.score-box {
+    background: #bbada0;
+    padding: 10px 15px;
+    border-radius: 5px;
+    color: white;
+    text-align: center;
+    min-width: 100px;
+}
+
+.score-title {
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.score-value {
+    font-size: 22px;
+    font-weight: bold;
+}
