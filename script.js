@@ -1,11 +1,22 @@
 const GRID_SIZE = 4;
+const CELL_SIZE = 20;
+const CELL_GAP = 2;
+
 let grid = [];
+let score = 0;
+let bestScore = 0;
+let gameOver = false;
 
 const gameGrid = document.getElementById('game-grid');
+const scoreDisplay = document.getElementById('score');
+const bestScoreDisplay = document.getElementById('best-score');
+const newGameButton = document.getElementById('new-game');
 
 function initGame() {
     createGrid();
     addInitialTiles();
+    setupEventListeners();
+    updateDisplay();
 }
 
 function createGrid() {
@@ -44,86 +55,27 @@ function addRandomTile() {
     if (emptyCells.length > 0) {
         const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         grid[randomCell.row][randomCell.col] = Math.random() < 0.9 ? 2 : 4;
-        createTileElement(randomCell.row, randomCell.col, grid[randomCell.row][randomCell.col]);
+        createTileElement(randomCell.row, randomCell.col, grid[randomCell.row][randomCell.col], true);
     }
 }
 
-function createTileElement(row, col, value) {
+function createTileElement(row, col, value, isNew = false) {
     const tile = document.createElement('div');
     tile.classList.add('tile', `tile-${value}`);
+    if (isNew) tile.classList.add('tile-new');
     tile.textContent = value;
-    tile.dataset.row = row;
-    tile.dataset.col = col;
     
-    const cellSize = 100 / GRID_SIZE;
-    tile.style.width = `calc(${cellSize}% - 20px)`;
-    tile.style.height = `calc(${cellSize}% - 20px)`;
-    tile.style.left = `calc(${col * cellSize}% + 10px)`;
-    tile.style.top = `calc(${row * cellSize}% + 10px)`;
+    updateTilePosition(tile, row, col);
     
     gameGrid.appendChild(tile);
 }
 
-window.addEventListener('load', initGame);
-
-let score = 0;
-let bestScore = 0;
-
-const scoreDisplay = document.getElementById('score');
-const bestScoreDisplay = document.getElementById('best-score');
-
-function updateDisplay() {
-    scoreDisplay.textContent = score;
-    bestScoreDisplay.textContent = bestScore;
-}
-
-function initGame() {
-    createGrid();
-    addInitialTiles();
-    updateDisplay();
-}
-
-function setupEventListeners() {
-    document.addEventListener('keydown', (e) => {
-        switch (e.key) {
-            case 'ArrowLeft':
-                e.preventDefault();
-                moveLeft();
-                break;
-        }
-    });
-}
-
-function moveLeft() {
-    let moved = false;
-    
-    for (let row = 0; row < GRID_SIZE; row++) {
-        for (let col = 1; col < GRID_SIZE; col++) {
-            if (grid[row][col] !== 0) {
-                let currentCol = col;
-                
-                while (currentCol > 0 && grid[row][currentCol - 1] === 0) {
-                    grid[row][currentCol - 1] = grid[row][currentCol];
-                    grid[row][currentCol] = 0;
-                    currentCol--;
-                    moved = true;
-                }
-                
-                if (currentCol > 0 && grid[row][currentCol - 1] === grid[row][currentCol]) {
-                    grid[row][currentCol - 1] *= 2;
-                    grid[row][currentCol] = 0;
-                    score += grid[row][currentCol - 1];
-                    moved = true;
-                }
-            }
-        }
-    }
-    
-    if (moved) {
-        addRandomTile();
-        updateAllTiles();
-        updateDisplay();
-    }
+function updateTilePosition(tile, row, col) {
+    const cellSize = 100 / GRID_SIZE;
+    tile.style.width = `calc(${cellSize}% - ${CELL_GAP * 2}%)`;
+    tile.style.height = `calc(${cellSize}% - ${CELL_GAP * 2}%)`;
+    tile.style.left = `calc(${col * cellSize}% + ${CELL_GAP}%)`;
+    tile.style.top = `calc(${row * cellSize}% + ${CELL_GAP}%)`;
 }
 
 function updateAllTiles() {
@@ -139,64 +91,41 @@ function updateAllTiles() {
     }
 }
 
-function initGame() {
-    createGrid();
-    addInitialTiles();
-    setupEventListeners();
-    updateDisplay();
-}
-
 function move(direction) {
-    let moved = false;
+    if (gameOver) return false;
     
+    let moved = false;
+
     switch (direction) {
-        case 'left':
-            moved = moveLeft();
-            break;
-        case 'right':
-            moved = moveRight();
-            break;
         case 'up':
             moved = moveUp();
             break;
         case 'down':
             moved = moveDown();
             break;
+        case 'left':
+            moved = moveLeft();
+            break;
+        case 'right':
+            moved = moveRight();
+            break;
     }
     
     if (moved) {
         addRandomTile();
+
         updateAllTiles();
         updateDisplay();
-    }
-}
 
-function moveRight() {
-    let moved = false;
-    
-    for (let row = 0; row < GRID_SIZE; row++) {
-        for (let col = GRID_SIZE - 2; col >= 0; col--) {
-            if (grid[row][col] !== 0) {
-                let currentCol = col;
-                
-                while (currentCol < GRID_SIZE - 1 && grid[row][currentCol + 1] === 0) {
-                    grid[row][currentCol + 1] = grid[row][currentCol];
-                    grid[row][currentCol] = 0;
-                    currentCol++;
-                    moved = true;
-                }
-                
-                if (currentCol < GRID_SIZE - 1 && grid[row][currentCol + 1] === grid[row][currentCol]) {
-                    grid[row][currentCol + 1] *= 2;
-                    grid[row][currentCol] = 0;
-                    score += grid[row][currentCol + 1];
-                    moved = true;
-                }
-            }
+        if (isGameOver()) {
+            gameOver = true;
+            setTimeout(() => alert("Игра окончена! Ваш счет: " + score), 300);
         }
+        
+        return true;
     }
     
-    return moved;
+    return false;
 }
 
 function moveUp() {
@@ -213,7 +142,7 @@ function moveUp() {
                     currentRow--;
                     moved = true;
                 }
-                
+
                 if (currentRow > 0 && grid[currentRow - 1][col] === grid[currentRow][col]) {
                     grid[currentRow - 1][col] *= 2;
                     grid[currentRow][col] = 0;
@@ -241,7 +170,7 @@ function moveDown() {
                     currentRow++;
                     moved = true;
                 }
-                
+
                 if (currentRow < GRID_SIZE - 1 && grid[currentRow + 1][col] === grid[currentRow][col]) {
                     grid[currentRow + 1][col] *= 2;
                     grid[currentRow][col] = 0;
@@ -255,17 +184,111 @@ function moveDown() {
     return moved;
 }
 
+function moveLeft() {
+    let moved = false;
+    
+    for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 1; col < GRID_SIZE; col++) {
+            if (grid[row][col] !== 0) {
+                let currentCol = col;
+                
+                while (currentCol > 0 && grid[row][currentCol - 1] === 0) {
+                    grid[row][currentCol - 1] = grid[row][currentCol];
+                    grid[row][currentCol] = 0;
+                    currentCol--;
+                    moved = true;
+                }
+
+                if (currentCol > 0 && grid[row][currentCol - 1] === grid[row][currentCol]) {
+                    grid[row][currentCol - 1] *= 2;
+                    grid[row][currentCol] = 0;
+                    score += grid[row][currentCol - 1];
+                    moved = true;
+                }
+            }
+        }
+    }
+    
+    return moved;
+}
+
+function moveRight() {
+    let moved = false;
+    
+    for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = GRID_SIZE - 2; col >= 0; col--) {
+            if (grid[row][col] !== 0) {
+                let currentCol = col;
+                
+                while (currentCol < GRID_SIZE - 1 && grid[row][currentCol + 1] === 0) {
+                    grid[row][currentCol + 1] = grid[row][currentCol];
+                    grid[row][currentCol] = 0;
+                    currentCol++;
+                    moved = true;
+                }
+
+                if (currentCol < GRID_SIZE - 1 && grid[row][currentCol + 1] === grid[row][currentCol]) {
+                    grid[row][currentCol + 1] *= 2;
+                    grid[row][currentCol] = 0;
+                    score += grid[row][currentCol + 1];
+                    moved = true;
+                }
+            }
+        }
+    }
+    
+    return moved;
+}
+
+function isGameOver() {
+    for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+            if (grid[row][col] === 0) {
+                return false;
+            }
+        }
+    }
+    
+    for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+            const current = grid[row][col];
+            
+            if ((row < GRID_SIZE - 1 && grid[row + 1][col] === current) ||
+                (col < GRID_SIZE - 1 && grid[row][col + 1] === current)) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+function startNewGame() {
+    grid = [];
+    score = 0;
+    gameOver = false;
+
+    const tiles = document.querySelectorAll('.tile');
+    tiles.forEach(tile => tile.remove());
+
+    createGrid();
+
+    addRandomTile();
+    addRandomTile();
+
+    updateDisplay();
+}
+
+function updateDisplay() {
+    scoreDisplay.textContent = score;
+    bestScoreDisplay.textContent = bestScore;
+}
+
 function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
+        if (gameOver) return;
+        
         switch (e.key) {
-            case 'ArrowLeft':
-                e.preventDefault();
-                move('left');
-                break;
-            case 'ArrowRight':
-                e.preventDefault();
-                move('right');
-                break;
             case 'ArrowUp':
                 e.preventDefault();
                 move('up');
@@ -274,39 +297,18 @@ function setupEventListeners() {
                 e.preventDefault();
                 move('down');
                 break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                move('left');
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                move('right');
+                break;
         }
     });
+
+    newGameButton.addEventListener('click', startNewGame);
 }
 
-function createTileElement(row, col, value, isNew = false) {
-    const tile = document.createElement('div');
-    tile.classList.add('tile', `tile-${value}`);
-    if (isNew) tile.classList.add('tile-new');
-    tile.textContent = value;
-    
-    const cellSize = 100 / GRID_SIZE;
-    tile.style.width = `calc(${cellSize}% - 20px)`;
-    tile.style.height = `calc(${cellSize}% - 20px)`;
-    tile.style.left = `calc(${col * cellSize}% + 10px)`;
-    tile.style.top = `calc(${row * cellSize}% + 10px)`;
-    
-    gameGrid.appendChild(tile);
-}
-
-function addRandomTile() {
-    const emptyCells = [];
-    
-    for (let row = 0; row < GRID_SIZE; row++) {
-        for (let col = 0; col < GRID_SIZE; col++) {
-            if (grid[row][col] === 0) {
-                emptyCells.push({ row, col });
-            }
-        }
-    }
-    
-    if (emptyCells.length > 0) {
-        const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        grid[randomCell.row][randomCell.col] = Math.random() < 0.9 ? 2 : 4;
-        createTileElement(randomCell.row, randomCell.col, grid[randomCell.row][randomCell.col], true);
-    }
-}
+window.addEventListener('load', initGame);
