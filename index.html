@@ -7,34 +7,53 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="header">
         <h1>2048</h1>
-        <div class="game-container">
-            <div class="game-grid" id="game-grid"></div>
+        <div class="scores-container">
+            <div class="score-box">
+                <div class="score-title">Счет</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Лучший</div>
+                <div class="score-value" id="best-score">0</div>
+            </div>
         </div>
     </div>
-    <div class="scores-container">
-        <div class="score-box">
-            <div class="score-title">Счет</div>
-            <div class="score-value" id="score">0</div>
-        </div>
-        <div class="score-box">
-            <div class="score-title">Лучший</div>
-            <div class="score-value" id="best-score">0</div>
-        </div>
-    </div>
+
     <div class="controls">
         <button id="new-game">Новая игра</button>
+        <button id="undo">Отменить ход</button>
+        <button id="show-leaderboard">Таблица лидеров</button>
     </div>
+
+    <div class="game-container">
+        <div class="game-grid" id="game-grid">
+        </div>
+    </div>
+
+    <div class="mobile-controls">
+        <button class="up-btn">↑</button>
+        <button class="left-btn">←</button>
+        <button class="right-btn">→</button>
+        <button class="down-btn">↓</button>
+    </div>
+
     <div class="modal" id="game-over-modal">
         <div class="modal-content">
             <h2>Игра окончена!</h2>
-            <p>Ваш счет: <span id="final-score">0</span></p>
-            <p>Введите ваше имя:</p>
-            <input type="text" id="player-name" placeholder="Ваше имя">
-            <div class="modal-buttons">
-                <button id="save-score">Сохранить результат</button>
-                <button id="restart-game">Начать заново</button>
+            <div id="game-over-message">
+                <p>Ваш счет: <span id="final-score">0</span></p>
+                <p>Введите ваше имя:</p>
+                <input type="text" id="player-name" placeholder="Ваше имя" maxlength="20">
+                <div class="modal-buttons">
+                    <button id="save-score">Сохранить результат</button>
+                    <button id="restart-game">Начать заново</button>
+                </div>
+            </div>
+            <div id="score-saved-message" style="display: none;">
+                <p>Ваш рекорд сохранен!</p>
+                <button id="close-modal">Закрыть</button>
             </div>
         </div>
     </div>
@@ -51,18 +70,14 @@
                             <th>Дата</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                    </tbody>
                 </table>
             </div>
-            <button id="close-leaderboard">Закрыть</button>
+            <button id="close-leaderboard" style="margin-top: 20px;">Закрыть</button>
         </div>
     </div>
-    <div class="mobile-controls">
-        <button class="up-btn">↑</button>
-        <button class="left-btn">←</button>
-        <button class="right-btn">→</button>
-        <button class="down-btn">↓</button>
-    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

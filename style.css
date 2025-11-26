@@ -10,64 +10,29 @@ body {
     color: #776e65;
     padding: 20px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     min-height: 100vh;
 }
 
-.container {
-    text-align: center;
+.header {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 h1 {
     font-size: 60px;
     font-weight: bold;
     color: #776e65;
-    margin-bottom: 20px;
-}
-
-.game-container {
-    width: 100%;
-    max-width: 500px;
-}
-
-.game-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 10px;
-    background-color: #bbada0;
-    border-radius: 6px;
-    padding: 10px;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-}
-
-.grid-cell {
-    background-color: rgba(238, 228, 218, 0.35);
-    border-radius: 3px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.tile {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    font-size: 35px;
-    border-radius: 3px;
-    background-color: #eee4da;
-    color: #776e65;
 }
 
 .scores-container {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
-    justify-content: center;
 }
 
 .score-box {
@@ -87,6 +52,46 @@ h1 {
 .score-value {
     font-size: 22px;
     font-weight: bold;
+}
+
+.game-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 20px;
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+    background-color: #bbada0;
+    border-radius: 6px;
+    padding: 10px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+}
+
+.grid-cell {
+    background-color: rgba(238, 228, 218, 0.35);
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tile {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 35px;
+    border-radius: 3px;
+    transition: all 0.15s ease-in-out;
+    z-index: 10;
 }
 
 .tile-2 { background-color: #eee4da; color: #776e65; }
@@ -125,7 +130,6 @@ h1 {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    justify-content: center;
 }
 
 button {
@@ -143,6 +147,27 @@ button {
 button:hover {
     background-color: #7c6b5a;
 }
+
+.mobile-controls {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 10px;
+    width: 200px;
+    height: 200px;
+    margin-top: 20px;
+}
+
+.mobile-controls button {
+    width: 100%;
+    height: 100%;
+    font-size: 24px;
+}
+
+.up-btn { grid-column: 2; grid-row: 1; }
+.left-btn { grid-column: 1; grid-row: 2; }
+.right-btn { grid-column: 3; grid-row: 2; }
+.down-btn { grid-column: 2; grid-row: 3; }
 
 .modal {
     display: none;
@@ -191,6 +216,11 @@ button:hover {
     max-width: 500px;
 }
 
+.leaderboard h2 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -227,24 +257,3 @@ tr:nth-child(even) {
         display: grid;
     }
 }
-
-.mobile-controls {
-    display: none;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 10px;
-    width: 200px;
-    height: 200px;
-    margin-top: 20px;
-}
-
-.mobile-controls button {
-    width: 100%;
-    height: 100%;
-    font-size: 24px;
-}
-
-.up-btn { grid-column: 2; grid-row: 1; }
-.left-btn { grid-column: 1; grid-row: 2; }
-.right-btn { grid-column: 3; grid-row: 2; }
-.down-btn { grid-column: 2; grid-row: 3; }
