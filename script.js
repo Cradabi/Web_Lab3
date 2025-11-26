@@ -6,19 +6,26 @@ let grid = [];
 let score = 0;
 let bestScore = 0;
 let gameOver = false;
+let moveHistory = [];
 
 const gameGrid = document.getElementById('game-grid');
 const scoreDisplay = document.getElementById('score');
 const bestScoreDisplay = document.getElementById('best-score');
 const newGameButton = document.getElementById('new-game');
+const undoButton = document.getElementById('undo');
+const showLeaderboardButton = document.getElementById('show-leaderboard');
 const gameOverModal = document.getElementById('game-over-modal');
 const finalScoreDisplay = document.getElementById('final-score');
 const playerNameInput = document.getElementById('player-name');
 const saveScoreButton = document.getElementById('save-score');
 const restartGameButton = document.getElementById('restart-game');
+const closeModalButton = document.getElementById('close-modal');
+const scoreSavedMessage = document.getElementById('score-saved-message');
+const gameOverMessage = document.getElementById('game-over-message');
 const leaderboardModal = document.getElementById('leaderboard-modal');
 const leaderboardTable = document.getElementById('leaderboard-table').getElementsByTagName('tbody')[0];
 const closeLeaderboardButton = document.getElementById('close-leaderboard');
+const mobileControls = document.querySelectorAll('.mobile-controls button');
 
 function initGame() {
     createGrid();
@@ -48,6 +55,7 @@ function startNewGame() {
     grid = [];
     score = 0;
     gameOver = false;
+    moveHistory = [];
 
     const tiles = document.querySelectorAll('.tile');
     tiles.forEach(tile => tile.remove());
@@ -57,11 +65,20 @@ function startNewGame() {
     addRandomTile();
     addRandomTile();
 
+    resetGameOverModal();
+
     saveGameState();
 
     updateDisplay();
+
     gameOverModal.style.display = 'none';
     leaderboardModal.style.display = 'none';
+}
+
+function resetGameOverModal() {
+    gameOverMessage.style.display = 'block';
+    scoreSavedMessage.style.display = 'none';
+    playerNameInput.value = '';
 }
 
 function addRandomTile() {
@@ -79,7 +96,9 @@ function addRandomTile() {
         const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         grid[randomCell.row][randomCell.col] = Math.random() < 0.9 ? 2 : 4;
         createTileElement(randomCell.row, randomCell.col, grid[randomCell.row][randomCell.col], true);
+        return true;
     }
+    return false;
 }
 
 function createTileElement(row, col, value, isNew = false) {
@@ -88,6 +107,10 @@ function createTileElement(row, col, value, isNew = false) {
     if (isNew) tile.classList.add('tile-new');
     tile.textContent = value;
     
+    tile.dataset.row = row;
+    tile.dataset.col = col;
+    tile.dataset.value = value;
+
     updateTilePosition(tile, row, col);
     
     gameGrid.appendChild(tile);
@@ -116,6 +139,11 @@ function updateAllTiles() {
 
 function move(direction) {
     if (gameOver) return false;
+
+    const prevState = {
+        grid: JSON.parse(JSON.stringify(grid)),
+        score: score
+    };
     
     let moved = false;
 
@@ -135,6 +163,8 @@ function move(direction) {
     }
     
     if (moved) {
+        moveHistory.push(prevState);
+
         addRandomTile();
 
         updateAllTiles();
@@ -289,6 +319,9 @@ function isGameOver() {
 function endGame() {
     gameOver = true;
     finalScoreDisplay.textContent = score;
+
+    resetGameOverModal();
+    
     gameOverModal.style.display = 'flex';
 
     if (score > bestScore) {
@@ -298,6 +331,18 @@ function endGame() {
     }
 
     saveGameState();
+}
+
+function undoMove() {
+    if (moveHistory.length > 0 && !gameOver) {
+        const prevState = moveHistory.pop();
+        grid = prevState.grid;
+        score = prevState.score;
+
+        updateAllTiles();
+        updateDisplay();
+        saveGameState();
+    }
 }
 
 function saveScore() {
@@ -317,8 +362,10 @@ function saveScore() {
 
         localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
 
-        gameOverModal.style.display = 'none';
-        startNewGame();
+        gameOverMessage.style.display = 'none';
+        scoreSavedMessage.style.display = 'block';
+
+        saveGameState();
     }
 }
 
@@ -340,6 +387,8 @@ function showLeaderboard() {
 function updateDisplay() {
     scoreDisplay.textContent = score;
     bestScoreDisplay.textContent = bestScore;
+
+    undoButton.disabled = moveHistory.length === 0 || gameOver;
 }
 
 function saveGameState() {
@@ -347,33 +396,39 @@ function saveGameState() {
         grid: grid,
         score: score,
         bestScore: bestScore,
-        gameOver: gameOver
+        gameOver: gameOver,
+        moveHistory: moveHistory
     };
     
     localStorage.setItem('gameState', JSON.stringify(gameState));
 }
 
 function loadGameState() {
-    bestScore = parseInt(localStorage.getItem('bestScore')) || 0;
-
     const savedState = localStorage.getItem('gameState');
     
     if (savedState) {
         const gameState = JSON.parse(savedState);
         grid = gameState.grid || [];
         score = gameState.score || 0;
-        bestScore = gameState.bestScore || bestScore;
+        bestScore = gameState.bestScore || 0;
         gameOver = gameState.gameOver || false;
+        moveHistory = gameState.moveHistory || [];
 
         updateAllTiles();
         updateDisplay();
 
         if (gameOver) {
             finalScoreDisplay.textContent = score;
+            resetGameOverModal();
             gameOverModal.style.display = 'flex';
         }
     } else {
         startNewGame();
+    }
+    const savedBestScore = localStorage.getItem('bestScore');
+    if (savedBestScore) {
+        bestScore = parseInt(savedBestScore);
+        bestScoreDisplay.textContent = bestScore;
     }
 }
 
@@ -401,10 +456,58 @@ function setupEventListeners() {
         }
     });
 
+    mobileControls.forEach(button => {
+        button.addEventListener('click', () => {
+            if (gameOver) return;
+            
+            const direction = button.classList[0].split('-')[0];
+            move(direction);
+        });
+    });
+
+    let touchStartX, touchStartY;
+    
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+    
+    document.addEventListener('touchend', (e) => {
+        if (!touchStartX || !touchStartY || gameOver) return;
+        
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        
+        const diffX = touchStartX - touchEndX;
+        const diffY = touchStartY - touchEndY;
+
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX > 0) {
+                move('left');
+            } else {
+                move('right');
+            }
+        } else {
+            if (diffY > 0) {
+                move('up');
+            } else {
+                move('down');
+            }
+        }
+        
+        touchStartX = null;
+        touchStartY = null;
+    });
+
     newGameButton.addEventListener('click', startNewGame);
+    undoButton.addEventListener('click', undoMove);
+    showLeaderboardButton.addEventListener('click', showLeaderboard);
 
     saveScoreButton.addEventListener('click', saveScore);
     restartGameButton.addEventListener('click', startNewGame);
+    closeModalButton.addEventListener('click', () => {
+        gameOverModal.style.display = 'none';
+    });
 
     closeLeaderboardButton.addEventListener('click', () => {
         leaderboardModal.style.display = 'none';
