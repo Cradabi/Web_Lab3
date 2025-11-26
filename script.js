@@ -11,6 +11,14 @@ const gameGrid = document.getElementById('game-grid');
 const scoreDisplay = document.getElementById('score');
 const bestScoreDisplay = document.getElementById('best-score');
 const newGameButton = document.getElementById('new-game');
+const gameOverModal = document.getElementById('game-over-modal');
+const finalScoreDisplay = document.getElementById('final-score');
+const playerNameInput = document.getElementById('player-name');
+const saveScoreButton = document.getElementById('save-score');
+const restartGameButton = document.getElementById('restart-game');
+const leaderboardModal = document.getElementById('leaderboard-modal');
+const leaderboardTable = document.getElementById('leaderboard-table').getElementsByTagName('tbody')[0];
+const closeLeaderboardButton = document.getElementById('close-leaderboard');
 
 function initGame() {
     createGrid();
@@ -52,6 +60,8 @@ function startNewGame() {
     saveGameState();
 
     updateDisplay();
+    gameOverModal.style.display = 'none';
+    leaderboardModal.style.display = 'none';
 }
 
 function addRandomTile() {
@@ -132,8 +142,7 @@ function move(direction) {
 
         saveGameState();
         if (isGameOver()) {
-            gameOver = true;
-            setTimeout(() => alert("Игра окончена! Ваш счет: " + score), 300);
+            endGame();
         }
         
         return true;
@@ -277,6 +286,57 @@ function isGameOver() {
     return true;
 }
 
+function endGame() {
+    gameOver = true;
+    finalScoreDisplay.textContent = score;
+    gameOverModal.style.display = 'flex';
+
+    if (score > bestScore) {
+        bestScore = score;
+        bestScoreDisplay.textContent = bestScore;
+        localStorage.setItem('bestScore', bestScore);
+    }
+
+    saveGameState();
+}
+
+function saveScore() {
+    const playerName = playerNameInput.value.trim();
+    
+    if (playerName) {
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+
+        leaderboard.push({
+            name: playerName,
+            score: score,
+            date: new Date().toLocaleDateString('ru-RU')
+        });
+
+        leaderboard.sort((a, b) => b.score - a.score);
+        leaderboard = leaderboard.slice(0, 10);
+
+        localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+
+        gameOverModal.style.display = 'none';
+        startNewGame();
+    }
+}
+
+function showLeaderboard() {
+    const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+
+    leaderboardTable.innerHTML = '';
+
+    leaderboard.forEach((entry, index) => {
+        const row = leaderboardTable.insertRow();
+        row.insertCell(0).textContent = entry.name;
+        row.insertCell(1).textContent = entry.score;
+        row.insertCell(2).textContent = entry.date;
+    });
+
+    leaderboardModal.style.display = 'flex';
+}
+
 function updateDisplay() {
     scoreDisplay.textContent = score;
     bestScoreDisplay.textContent = bestScore;
@@ -286,7 +346,8 @@ function saveGameState() {
     const gameState = {
         grid: grid,
         score: score,
-        bestScore: bestScore
+        bestScore: bestScore,
+        gameOver: gameOver
     };
     
     localStorage.setItem('gameState', JSON.stringify(gameState));
@@ -302,9 +363,15 @@ function loadGameState() {
         grid = gameState.grid || [];
         score = gameState.score || 0;
         bestScore = gameState.bestScore || bestScore;
+        gameOver = gameState.gameOver || false;
 
         updateAllTiles();
         updateDisplay();
+
+        if (gameOver) {
+            finalScoreDisplay.textContent = score;
+            gameOverModal.style.display = 'flex';
+        }
     } else {
         startNewGame();
     }
@@ -335,6 +402,22 @@ function setupEventListeners() {
     });
 
     newGameButton.addEventListener('click', startNewGame);
+
+    saveScoreButton.addEventListener('click', saveScore);
+    restartGameButton.addEventListener('click', startNewGame);
+
+    closeLeaderboardButton.addEventListener('click', () => {
+        leaderboardModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === gameOverModal) {
+            gameOverModal.style.display = 'none';
+        }
+        if (e.target === leaderboardModal) {
+            leaderboardModal.style.display = 'none';
+        }
+    });
 }
 
 window.addEventListener('load', initGame);
