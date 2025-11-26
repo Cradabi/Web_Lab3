@@ -14,7 +14,7 @@ const newGameButton = document.getElementById('new-game');
 
 function initGame() {
     createGrid();
-    addInitialTiles();
+    loadGameState();
     setupEventListeners();
     updateDisplay();
 }
@@ -36,9 +36,22 @@ function createGrid() {
     }
 }
 
-function addInitialTiles() {
+function startNewGame() {
+    grid = [];
+    score = 0;
+    gameOver = false;
+
+    const tiles = document.querySelectorAll('.tile');
+    tiles.forEach(tile => tile.remove());
+
+    createGrid();
+
     addRandomTile();
     addRandomTile();
+
+    saveGameState();
+
+    updateDisplay();
 }
 
 function addRandomTile() {
@@ -117,6 +130,7 @@ function move(direction) {
         updateAllTiles();
         updateDisplay();
 
+        saveGameState();
         if (isGameOver()) {
             gameOver = true;
             setTimeout(() => alert("Игра окончена! Ваш счет: " + score), 300);
@@ -263,25 +277,37 @@ function isGameOver() {
     return true;
 }
 
-function startNewGame() {
-    grid = [];
-    score = 0;
-    gameOver = false;
-
-    const tiles = document.querySelectorAll('.tile');
-    tiles.forEach(tile => tile.remove());
-
-    createGrid();
-
-    addRandomTile();
-    addRandomTile();
-
-    updateDisplay();
-}
-
 function updateDisplay() {
     scoreDisplay.textContent = score;
     bestScoreDisplay.textContent = bestScore;
+}
+
+function saveGameState() {
+    const gameState = {
+        grid: grid,
+        score: score,
+        bestScore: bestScore
+    };
+    
+    localStorage.setItem('gameState', JSON.stringify(gameState));
+}
+
+function loadGameState() {
+    bestScore = parseInt(localStorage.getItem('bestScore')) || 0;
+
+    const savedState = localStorage.getItem('gameState');
+    
+    if (savedState) {
+        const gameState = JSON.parse(savedState);
+        grid = gameState.grid || [];
+        score = gameState.score || 0;
+        bestScore = gameState.bestScore || bestScore;
+
+        updateAllTiles();
+        updateDisplay();
+    } else {
+        startNewGame();
+    }
 }
 
 function setupEventListeners() {
